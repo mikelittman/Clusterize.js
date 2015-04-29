@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>Clusterize.js Demo</title>
+        <link rel="stylesheet" type="text/css" href="clusterize.css">
+    </head>
+    <body>
+        <h3>Testbed</h3>
+        <!--HTML-->
+        <div class="clusterize">
+          <table>
+            <thead></thead>
+          </table>
+          <div id="scrollArea" class="clusterize-scroll">
+            <table>
+              <tbody id="contentArea" class="clusterize-content">
+                <tr class="clusterize-no-data">
+                  <td>Loading data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <script src="clusterize.js"></script>
+        <script>
+            (function(){
+                var data = [],
+                    randomString = function(len){
+                        return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0,len);
+                    };
+
+                for(var i=0; i<100000; i++){
+                    var row = document.createElement('td');
+                    row.innerText = randomString(5);
+                    data.push(row);
+                }
+
+                var clusterize = new Clusterize({
+                  rows: data,
+                  scrollId: 'scrollArea',
+                  contentId: 'contentArea'
+                });
+            })();
+        </script>
+    </body>
+</html>

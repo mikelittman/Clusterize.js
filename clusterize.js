@@ -74,12 +74,12 @@
 
     // restore the scroll position
     self.scrollElem.scrollTop = scrollTop;
-    
+
     // adding scroll handler
     var last_cluster = false,
     scrollEv = function () {
       if (last_cluster != (last_cluster = self.getClusterNum()))
-        self.insertToDOM(rows, cache);         
+        self.insertToDOM(rows, cache);
     }
     self.scrollElem.addEventListener('scroll', scrollEv);
 
@@ -118,7 +118,7 @@
       var opts = this.options;
       if( ! opts.item_height || ! opts.tag) {
         if( ! rows.length) return;
-        this.html(rows[0] + rows[0] + rows[0]);
+        this.html([rows[0],rows[0],rows[0]]);
         var node = this.contentElem.children[1];
         if( ! opts.tag) opts.tag = node.tagName.toLowerCase();
         opts.item_height = node.offsetHeight;
@@ -136,15 +136,17 @@
     generateEmptyRow: function() {
       var opts = this.options;
       if( ! opts.tag || ! opts.show_no_data_row) return [];
-      var empty_row = '<' + opts.tag + ' class="' + opts.no_data_class + '">';
+      var empty_row = document.createElement(opts.tag);
+      empty_row.className = opts.no_data_class;
       switch(opts.tag) {
         case 'tr':
-          empty_row += '<td>' + opts.no_data_text + '</td>';
+          var td = document.createElement('td');
+          td.innerText = opts.no_data_text;
+          empty_row.appendChild(td);
           break;
         default:
-          empty_row += opts.no_data_text;
+          empty_row.innerText(opts.no_data.text);
       }
-      empty_row += '</' + opts.tag + '>';
       return [empty_row];
     },
     // generate cluster for current scroll position
@@ -167,18 +169,30 @@
         bottom_margin = (rows_len - items_end) * opts.item_height,
         this_cluster_items = [];
       if(top_margin > 0) {
-        opts.keep_parity && this_cluster_items.push('<' + opts.tag + ' class="clusterize-extra-row clusterize-keep-parity"></' + opts.tag + '>');
-        this_cluster_items.push('<' + opts.tag + ' class="clusterize-extra-row clusterize-top-space" style="height:' + top_margin + 'px;"></' + opts.tag + '>');
+          if(opts.key_parity){
+              var item = document.createElement(opts.tag);
+              item.className = 'clusterize-extra-row clusterize-keep-parity';
+              this_cluster_items.push(item);
+          }
+          var item = document.createElement(opts.tag);
+          item.className = 'clusterize-extra-row clusterize-top-space';
+          item.style = 'height:' + top_margin + 'px;';
+          this_cluster_items.push(items);
       }
       for (var i = items_start; i < items_end; i++) {
         rows[i] && this_cluster_items.push(rows[i]);
       }
-      bottom_margin > 0 && this_cluster_items.push('<' + opts.tag + ' class="clusterize-extra-row clusterize-bottom-space" style="height:' + bottom_margin + 'px;"></' + opts.tag + '>');
+      if(bottom_margin > 0){
+          var item = document.createElement(opts.tag);
+          item.className = 'clusterize-extra-row clusterize-bottom-space';
+          item.style = 'height:' + bottom_margin + 'px;';
+          this_cluster_items.push(item);
+      }
       return this_cluster_items;
     },
     // if necessary verify data changed and insert to DOM
     insertToDOM: function(rows, cache) {
-      var data = this.generate(rows, this.getClusterNum()).join('');
+      var data = this.generate(rows, this.getClusterNum());
       if( ! this.options.verify_change || this.options.verify_change && this.dataChanged(data, cache)) {
         this.html(data);
       }
@@ -187,17 +201,26 @@
     html: function(data) {
       var contentElem = this.contentElem;
       if(ie && ie <= 9 && this.options.tag == 'tr') {
-        var div = document.createElement('div'), last;
-        div.innerHTML = '<table><tbody>' + data + '</tbody></table>'
+        var table = document.createElement('table'),
+            tbody = document.createElement('tbody'),
+            last;
+
+        for(var i in data)
+            tbody.appendChild(data[i]);
+
         while((last = contentElem.lastChild)) {
-          contentElem.removeChild(last)
+          contentElem.removeChild(last);
         }
-        var rows = Array.prototype.slice.call(div.firstChild.firstChild.childNodes);
+
+        var rows = Array.prototype.slice.call(table.querySelectorAll(':scope tbody').childNodes);
         while (rows.length) {
           contentElem.appendChild(rows.shift());
         }
       } else {
-        contentElem.innerHTML = data;
+          for(var i in data){
+              console.log(data[i]);
+              contentElem.appendChild(data[i]);
+          }
       }
     },
     dataChanged: function(data, cache) {
